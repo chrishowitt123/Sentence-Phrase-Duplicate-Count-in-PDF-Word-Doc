@@ -73,6 +73,9 @@ if filetype == 'pdf':
     
     results.to_excel(filename + '_PDF_SimStrings.xlsx')
     
+    print( "\n")
+    print("Your PDF_SimStrings report was successfully created!")
+    
     
 else:
     print( "\n")  
@@ -114,5 +117,8 @@ else:
     os.path.dirname(os.path.abspath(filename))
     
     results.to_excel(filename + '_DOCX_SimStrings.xlsx')
+    
+    print( "\n")
+    print("Your DOCX_SimStrings report was successfully created!")
 
     
