@@ -6,16 +6,13 @@ Created on Fri Oct  9 14:43:49 2020
 """
 import pdfplumber
 import pandas as pd
+import tkinter
 from tkinter import filedialog
 from iteration_utilities import deepflatten
 from collections import Counter
-import pandas as pd
 import os
 
 import docx2txt
-import itertools
-import re
-from rapidfuzz import fuzz
 from nltk.tokenize import PunktSentenceTokenizer
 
 filetype = input("Type 'word' for a Word doc or 'pdf' for a PDF: ").lower()
@@ -27,6 +24,9 @@ if filetype == 'pdf':
     print( "\n")  
     print("Please choose your file")
     print( "\n") 
+    
+    root = tkinter.Tk()
+    root.wm_withdraw() # this completely hides the root window
 
     filename = filedialog.askopenfilename()
             
@@ -84,6 +84,8 @@ else:
     print("Please choose your file")
     print( "\n") 
     
+    root = tkinter.Tk()
+    root.wm_withdraw() # this completely hides the root window
     filename = filedialog.askopenfilename()
             
     fn = filename.split('.')[0] #seperate filename from extention for f-string output files
