@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Oct 10 19:54:47 2020
+
+@author: chris
+"""
 import docx2txt
 import itertools
 import pandas as pd
@@ -11,26 +17,14 @@ from tkinter import filedialog
 print( "\n")  
 print("Welcome to SentSim!")
 print( "\n")  
-print("""     ______ ______
-    _/      Y      \_
-   // ~~ ~~ | ~~ ~  \\
-  // ~ ~ ~~ | ~~~ ~~ \\      
- //________.|.________\\     
-`----------`-'----------'""")
-print( "\n") 
-answer = input('Do you need to search for your file? Y/N: ').lower()
-print('\n')
-if answer == 'y':
-    
-    root = tkinter.Tk()
-    root.wm_withdraw() # this completely hides the root window
-    file = filedialog.askopenfilename()
+print("Please select your file")
 
-else:
-    file = input('Paste the location of the file: ').strip('"')
+root = tkinter.Tk()
+root.wm_withdraw() # this completely hides the root window
+file = filedialog.askopenfilename()
 
 print( "\n")
-print(""" Processing.. 
+print("""Processing.. 
       
       |\      _,,,---,,_
 ZZZzz /,`.-'`'    -.  ;-;;,_
