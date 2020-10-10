@@ -1,126 +1,152 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Oct  9 14:43:49 2020
-
-@author: chris
-"""
-import pdfplumber
+import docx2txt
+import itertools
 import pandas as pd
+import re
+from rapidfuzz import fuzz
+from nltk.tokenize import PunktSentenceTokenizer
+from termcolor import colored
 import tkinter
 from tkinter import filedialog
-from iteration_utilities import deepflatten
-from collections import Counter
-import os
 
-import docx2txt
-from nltk.tokenize import PunktSentenceTokenizer
-
-filetype = input("Type 'word' for a Word doc or 'pdf' for a PDF: ").lower()
-
-if filetype == 'pdf':
-    
-    print( "\n")  
-    print("Welcome to PDF_SimStrings!")
-    print( "\n")  
-    print("Please choose your file")
-    print( "\n") 
+print( "\n")  
+print("Welcome to SentSim!")
+print( "\n")  
+print("""     ______ ______
+    _/      Y      \_
+   // ~~ ~~ | ~~ ~  \\
+  // ~ ~ ~~ | ~~~ ~~ \\      
+ //________.|.________\\     
+`----------`-'----------'""")
+print( "\n") 
+answer = input('Do you need to search for your file? Y/N: ').lower()
+print('\n')
+if answer == 'y':
     
     root = tkinter.Tk()
     root.wm_withdraw() # this completely hides the root window
+    file = filedialog.askopenfilename()
 
-    filename = filedialog.askopenfilename()
-            
-    fn = filename.split('.')[0] #seperate filename from extention for f-string output files
-    
-    n = 1
-    allText = []
-    
-    
-    
-    with pdfplumber.open(filename) as pdf: #extract text from desired page
-    
-        while len(pdf.pages) >= n:
-            page = pdf.pages[n-1]
-            text = page.extract_text()
-            #print( "\n")  #test to check tht all pages are being read
-            #print('Page No. ' + str(n)) 
-            #print( "\n") 
-            #print(text)    
-            allText.append(text)
-            n = n +1
-    
-    allTextList = []
-    
-    for i in allText:
-        s = i.split("\n")
-        allTextList.append(s)
-    
-    allTextFlat = list(deepflatten(allTextList, depth=1))
-    
-    repeaters  = Counter(allTextFlat)
-    
-    results = pd.DataFrame.from_dict(repeaters, orient='index')
-    results.columns = ['No. of instances']  
-    results = results[results['No. of instances']>1]
-    results.sort_values(by=['No. of instances'],ascending=False, inplace=True)
-    pd.set_option("display.max_rows", None, "display.max_columns", None)
-    print("Results!")
-    print( "\n")
-    print(results)
-    
-    
-    os.path.dirname(os.path.abspath(filename))
-    
-    results.to_excel(filename + '_PDF_SimStrings.xlsx')
-    
-    print( "\n")
-    print("Your PDF_SimStrings report was successfully created!")
-    
-    
 else:
-    print( "\n")  
-    print("Welcome to DOCX_SimStrings!")
-    print( "\n")  
-    print("Please choose your file")
-    print( "\n") 
+    file = input('Paste the location of the file: ').strip('"')
+
+print( "\n")
+print(""" Processing.. 
+      
+      |\      _,,,---,,_
+ZZZzz /,`.-'`'    -.  ;-;;,_
+     |,4-  ) )-,_. ,\ (  `'-'
+    '---''(_/--'  `-'\_)   """)
     
-    root = tkinter.Tk()
-    root.wm_withdraw() # this completely hides the root window
-    filename = filedialog.askopenfilename()
-            
-    fn = filename.split('.')[0] #seperate filename from extention for f-string output files
+    
+print( "\n")   
+print( "\n")  
+print( "\n")  
+print( "\n")   
+
+text = docx2txt.process(file)
+sent_tokenizer = PunktSentenceTokenizer(text)
+sents = sent_tokenizer.tokenize(text)
+sents = set(sents)
+
+x_list = []
+y_list = []
+score = []
+
+for x,y in itertools.combinations(sents, 2):
+    fuzz.ratio(x, y)
+    score.append(fuzz.ratio(x, y))
+    x_list.append(x)
+    y_list.append(y)
+    
+# remove consecutive blank lines
+
+x_list1 = []  
+for x in x_list:
+
+    xn = re.sub(r'\n\s*\n', '\n\n', x)
+    x_list1.append(xn)
+    
+y_list1 = []  
+for y in y_list:
+
+    yn = re.sub(r'\n\s*\n', '\n\n', y)
+    y_list1.append(yn)
+    
+data_tuples = list(zip(x_list1,y_list1,score))
+
+results = pd.DataFrame(data_tuples, columns=['X','Y', 'Score'])  
+
+results = results.sort_values(by=['Score'], ascending=False)
+results = results[results['Score'] > 60]
+
+x_list3 = list(results['X'])
+y_list3 = list(results['Y'])
         
-    text = docx2txt.process(filename)
-    sent_tokenizer = PunktSentenceTokenizer(text)
-    sents = sent_tokenizer.tokenize(text)
     
-    allTextList = []
+# uncommon words
+
+diffs = []
+
+
+def find(X, Y):
+    count = {}
+    for word in X.split():
+        count[word] = count.get(word, 0) + 1
+
+    for word in Y.split():
+        count[word] = count.get(word, 0) + 1
+    return [word for word in count if count[word] == 1]
+
+
+
+for X,Y in zip(x_list3, y_list3):
+    diffs.append((find(X, Y)))
     
-    for sent in sents:
-        s = sent.split("\n")
-        allTextList.append(s)
-    
-    allTextFlat = list(deepflatten(allTextList, depth=1))
-    allTextFlat = [ x.replace('\t', '') for x in allTextFlat ]
-    allTextFlat = [x for x in allTextFlat if x.strip()] 
-    
-    repeaters  = Counter(allTextFlat)
-    
-    results = pd.DataFrame.from_dict(repeaters, orient='index')
-    results.columns = ['No. of instances']  
-    results = results[results['No. of instances']>1]
-    results.sort_values(by=['No. of instances'],ascending=False, inplace=True)
-    pd.set_option("display.max_rows", None, "display.max_columns", None)
-    print("Results!")
-    print( "\n")
-    print(results)
-    
-    
-    os.path.dirname(os.path.abspath(filename))
-    
-    results.to_excel(filename + '_DOCX_SimStrings.xlsx')
-    
-    print( "\n")
-    print("Your DOCX_SimStrings report was successfully created!")
+diffsList = [' '.join(x) for x in diffs]
+results['Diffs'] = diffsList
+results = results[['Score', 'X', 'Y', 'Diffs']]
+
+
+resultsXlist = results['X'].tolist()
+resultsYlist = results['Y'].tolist()
+resultDIFFSYlist = results['Diffs'].tolist()
+resultSCORElist  = results['Score'].tolist()
+
+
+
+
+n = 0
+while n <= len(resultsXlist) - 1:
+
+    text1 = resultsXlist[n]  
+    text2 = resultsYlist[n] 
+    l1 = resultDIFFSYlist[n].split()
 
     
+    
+    formattedText1 = []
+    for t in text1.split():
+        if t in l1:
+            formattedText1.append(colored(t,'red', attrs=['bold']))
+        else: 
+            formattedText1.append(t)
+
+    
+    formattedText2 = []
+    for t in text2.split():
+        if t in l1:
+            formattedText2.append(colored(t,'red', attrs=['bold']))
+        else: 
+            formattedText2.append(t)
+ 
+    print( "\n")
+    print(colored(resultSCORElist[n], 'green'))
+    print(colored(l1, 'blue'))
+    print( "\n")
+    print(" ".join(formattedText1))
+    print( "\n")
+    print(" ".join(formattedText2))
+    print( "\n")
+    print( "\n")
+    
+    n = n+1
